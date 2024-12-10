@@ -20,7 +20,7 @@ origins = settings.origins
 app.add_middleware(
     CORSMiddleware,
     # TrustedHostMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

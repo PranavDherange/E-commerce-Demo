@@ -31,23 +31,30 @@ async def test():
 @router.post("/{user_id}/add_item", response_model=ResponseBody)
 async def add_item_to_cart(user_id: int, item: CartItem):
     try:
-      # Check if the user already has a cart
-      if user_id not in carts:
-          carts[user_id] = []  # Create a new cart for the user if it doesn't exist
+        # Check if the user already has a cart
+        if user_id not in carts:
+            carts[user_id] = []  # Create a new cart for the user if it doesn't exist
 
-      # Add the item to the user's cart
-      carts[user_id].append({
-          "product_name": item.product_name,
-          "quantity": item.quantity,
-          "price": item.price
-      })
+        # Check if the item already exists in the user's cart
+        existing_item_index = next((index for index, cart_item in enumerate(carts[user_id]) if cart_item['product_name'] == item.product_name), None)
 
-      return ResponseBody(
-        status='success',
-        status_code='200',
-        data={"cart": carts[user_id]},
-        message='Successfully sent data'
-      )
+        if existing_item_index is not None:
+            # If item exists, update the quantity
+            carts[user_id][existing_item_index]['quantity'] += item.quantity
+        else:
+            # If item doesn't exist, add it to the cart
+            carts[user_id].append({
+                "product_name": item.product_name,
+                "quantity": item.quantity,
+                "price": item.price
+            })
+
+        return ResponseBody(
+            status='success',
+            status_code='200',
+            data={"cart": carts[user_id]},
+            message='Successfully added item to cart'
+        )
 
     
     except Exception as e:

@@ -14,30 +14,62 @@ const ProductPage = () => {
 
   // Local state to hold the cart
   const [cart, setCart] = useState([]);
+  const [userId, setUserId] = useState(null);  // Keep track of the user_id
 
   // Load cart from localStorage on component mount
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
     setCart(savedCart);
+
+    // Get user_id from localStorage
+    const savedUserId = localStorage.getItem('userId'); 
+    if (savedUserId) {
+      setUserId(savedUserId);
+    } else {
+      console.error('No user_id found in localStorage');
+    }
   }, []);
 
   // Function to add an item to the cart
-  const addToCart = (product) => {
+  const addToCart = async (product) => {
     // Check if the product already exists in the cart
     const existingProductIndex = cart.findIndex(item => item.id === product.id);
 
+    let updatedCart;
     if (existingProductIndex !== -1) {
       // If it exists, update the quantity
-      const updatedCart = [...cart];
+      updatedCart = [...cart];
       updatedCart[existingProductIndex].quantity += 1;
-      setCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));  // Save updated cart to localStorage
     } else {
       // If it doesn't exist, add the product to the cart
-      const updatedCart = [...cart, { ...product, quantity: 1 }];
-      setCart(updatedCart);
-      localStorage.setItem('cart', JSON.stringify(updatedCart));  // Save updated cart to localStorage
+      updatedCart = [...cart, { ...product, quantity: 1 }];
     }
+
+    // Update local state and localStorage
+    setCart(updatedCart);
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    
+
+    // Call the backend API to update the cart (POST request)
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/v1/orders/${userId}/add_item`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          product_name: product.name,
+          quantity: 1,
+          price: product.price,
+        }),
+      });
+
+      const data = await response.json();
+      console.log('Backend response:', data);
+    } catch (error) {
+      console.error('Error adding item to cart:', error);
+    }
+
   };
 
   return (

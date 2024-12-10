@@ -7,13 +7,27 @@ const CheckoutPage = () => {
   const [discountCode, setDiscountCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
+  const [loading, setLoading] = useState(false); // Loading state for API request
+  const [error, setError] = useState(null); // Error handling for API requests
+  const [userId, setUserId] = useState(null); // State for userId
 
-  // Load cart from localStorage on component mount
+  // Load cart and userId from localStorage on component mount
   useEffect(() => {
     const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
     setCart(savedCart);
     calculateTotalPrice(savedCart);  // Calculate the initial total price
+
+    // Fetch userId from localStorage
+    const savedUserId = localStorage.getItem('userId');
+    if (savedUserId) {
+      setUserId(savedUserId); // Set userId state if it's available
+    } else {
+      console.error("User ID not found in localStorage");
+    }
   }, []);
+
+  console.log(cart);
+  console.log(userId);
 
   // Function to calculate the total price of the cart
   const calculateTotalPrice = (cartItems) => {
@@ -48,13 +62,44 @@ const CheckoutPage = () => {
     calculateTotalPrice(cart);  // Recalculate total price after discount
   };
 
-  // Handle Checkout
-  const handleCheckout = () => {
-    alert('Order placed successfully!');
-    // Here, you can send the order data to the backend for processing
-    localStorage.removeItem('cart');  // Clear cart after order
-    setCart([]);  // Clear cart in the state
-    setTotalPrice(0);  // Reset total price
+  // Handle Checkout - make API request to backend
+  const handleCheckout = async () => {
+    setLoading(true); // Start loading
+    setError(null); // Clear any previous errors
+
+    const payload = {
+      user_id: userId,
+      discount_code: discountCode || null,
+    };
+
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/v1/orders/${userId}/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Error during checkout');
+      }
+
+      const result = await response.json();
+      console.log('Checkout successful', result);
+
+      // Clear the cart after successful checkout
+      localStorage.removeItem('cart');
+      setCart([]);
+      setTotalPrice(0);
+      alert('Order placed successfully!');
+    } catch (error) {
+      console.error('Checkout failed', error);
+      setError(error.message);
+    } finally {
+      setLoading(false); // Stop loading
+    }
   };
 
   return (
@@ -96,4 +141,4 @@ const CheckoutPage = () => {
   );
 };
 
-export default CheckoutPage
+export default CheckoutPage;
