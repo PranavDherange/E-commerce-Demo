@@ -1,0 +1,54 @@
+/* Navbar styles */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 10px 20px;
+    color: white;
+  }
+  
+  .navbar-logo h2 {
+    margin: 0;
+    font-size: 1.8rem;
+  }
+  
+  .navbar-links ul {
+    display: flex;
+    list-style: none;
+  }
+  
+  .navbar-links ul li {
+    margin-right: 20px;
+  }
+  
+  .navbar-links ul li a {
+    text-decoration: none;
+    color: white;
+    font-size: 1rem;
+  }
+  
+  .navbar-cart {
+    position: relative;
+  }
+  
+  .navbar-cart a {
+    color: white;
+    text-decoration: none;
+  }
+  
+  .cart-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: red;
+    color: white;
+    font-size: 12px;
+    padding: 2px 6px;
+    border-radius: 50%;
+  }
+  
+  .navbar-cart a:hover {
+    cursor: pointer;
+  }
+  
