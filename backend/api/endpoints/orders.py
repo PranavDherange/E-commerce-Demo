@@ -4,17 +4,12 @@ from core.config import get_settings
 import sys
 from schemas.schemas import ResponseBody, CartItem
 from typing import Optional
+from store.shared_data import carts, orders
 
 
 settings = get_settings()
 
 router = APIRouter()
-
-# In-memory storage for carts
-carts = {}
-
-# In-memory storage for orders
-orders = {}
 
 @router.get("/test", response_model=ResponseBody)
 async def test():
