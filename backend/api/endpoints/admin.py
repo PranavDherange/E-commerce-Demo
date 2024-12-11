@@ -21,7 +21,7 @@ def generate_coupon_code(length=10):
 
 
 # API to generate a coupon code
-@router.post("/generate_coupon", response_model=ResponseBody)
+@router.get("/generate_coupon", response_model=ResponseBody)
 async def generate_coupon():
     try:
         # Generate a unique coupon code (e.g., 10 characters long)
@@ -65,6 +65,7 @@ async def get_stats():
             # Check that user_orders is a list
             if isinstance(user_orders, list):
                 for order in user_orders:
+                    print(order)
                     # Check if 'cart_items' is a list
                     if isinstance(order.get('cart_items'), list):
                         # Count total items purchased (sum of quantities from cart_items)
@@ -73,8 +74,7 @@ async def get_stats():
                         # Calculate the total amount spent on the order
                         total_amount += order['total_amount']
 
-                        # Calculate the total discount applied for the order
-                        total_discount += order['discount_applied']
+                        total_discount = order['discount_applied']
 
                         # Store the order details
                         all_orders.append(order)

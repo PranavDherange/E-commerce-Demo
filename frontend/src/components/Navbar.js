@@ -29,6 +29,7 @@ const Navbar = () => {
           <li><a href="/login">Login</a></li>
           <li><a href="/products">Products</a></li>
           <li><a href="/checkout">Checkout</a></li>
+          <li><a href="/stats">Stats</a></li>
         </ul>
       </div>
       <div className="navbar-cart">

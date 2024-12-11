@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class ResponseBody(BaseModel):
     status: str
@@ -10,3 +11,8 @@ class CartItem(BaseModel):
     product_name: str
     quantity: int
     price: float
+
+class Order(BaseModel):
+    total_amount: float
+    discount_code: Optional[str]=None
+    discount_applied: Optional[float]=None

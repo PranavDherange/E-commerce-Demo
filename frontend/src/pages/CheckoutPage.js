@@ -10,6 +10,9 @@ const CheckoutPage = () => {
   const [loading, setLoading] = useState(false); // Loading state for API request
   const [error, setError] = useState(null); // Error handling for API requests
   const [userId, setUserId] = useState(null); // State for userId
+  const [ordersCount, setOrdersCount] = useState(0);  // New state to store the number of orders
+  const [couponCode, setCouponCode] = useState(null);  // Store coupon code if applicable
+  const [isDiscountButtonEnabled, setDiscountButtonEnabled] = useState(false);  // Enable/Disable discount button
 
   // Load cart and userId from localStorage on component mount
   useEffect(() => {
@@ -26,16 +29,67 @@ const CheckoutPage = () => {
     }
   }, []);
 
-  console.log(cart);
-  console.log(userId);
-
-  // Function to calculate the total price of the cart
-  const calculateTotalPrice = (cartItems) => {
-    const subtotal = cartItems.reduce(
+  useEffect(() => {
+    const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
+    setCart(savedCart);
+    const initialSubtotal = savedCart.reduce(
       (total, item) => total + item.price * item.quantity,
       0
     );
-    setTotalPrice(subtotal - discountAmount);  // Apply discount if any
+    setTotalPrice(initialSubtotal);  // Set the initial total price
+  }, []);
+  
+
+    // Fetch orders and update the discount button and coupon code logic
+    useEffect(() => {
+        if (userId) {
+          fetchOrders(userId);
+        }
+      }, [userId]);
+
+    const fetchOrders = async (userId) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/v1/orders/${userId}/orders`);
+          const data = await response.json();
+    
+          if (data.status === 'success') {
+            const orders = data.data.orders;
+            setOrdersCount(orders.length);
+    
+            // Enable discount button if the order count is a multiple of 2
+            if ((orders.length+1) % 2 === 0) {
+              setDiscountButtonEnabled(true);
+              fetchCouponCode();
+            } else {
+              setDiscountButtonEnabled(false);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to fetch orders:', error);
+          setError('Failed to fetch orders');
+        }
+    };
+
+    const fetchCouponCode = async () => {
+        try {
+          const response = await fetch(`http://127.0.0.1:8000/v1/admin/generate_coupon`);
+          const data = await response.json();
+    
+          if (data.status === 'success') {
+            setCouponCode(data.data.coupon_code);
+            setDiscountCode(data.data.coupon_code); // Autofill coupon code into the discount input
+          } else {
+            setCouponCode(null);
+          }
+        } catch (error) {
+          console.error('Failed to fetch coupon code:', error);
+        }
+      };
+
+  // Function to calculate the total price of the cart
+  const calculateTotalPrice = (subtotal, discount) => {
+    const finalPrice = subtotal - discount; // Apply discount directly
+    setTotalPrice(finalPrice); // Update the total price with the discount applied
   };
 
   // Handle discount code input
@@ -43,33 +97,40 @@ const CheckoutPage = () => {
     setDiscountCode(e.target.value);
   };
 
-  // Handle Apply Discount Code
   const applyDiscount = () => {
-    const validCodes = ['DISCOUNT10', 'DISCOUNT20'];  // Example valid discount codes
-    let discount = 0;
-
-    if (validCodes.includes(discountCode)) {
-      if (discountCode === 'DISCOUNT10') {
-        discount = totalPrice * 0.10;  // 10% discount
-      } else if (discountCode === 'DISCOUNT20') {
-        discount = totalPrice * 0.20;  // 20% discount
-      }
-    } else {
-      alert('Invalid discount code');
-    }
-
-    setDiscountAmount(discount);
-    calculateTotalPrice(cart);  // Recalculate total price after discount
+    // Apply a 10% discount based on the subtotal (without any discount applied)
+    const subtotal = cart.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+    const discount = subtotal * 0.10;  // 10% discount
+    setDiscountAmount(discount);  // Set the discount amount
+    calculateTotalPrice(subtotal, discount);  // Recalculate total price with the discount
   };
+
 
   // Handle Checkout - make API request to backend
   const handleCheckout = async () => {
     setLoading(true); // Start loading
     setError(null); // Clear any previous errors
 
+    // Calculate the total amount for the cart items (subtotal)
+    const subtotal = cart.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
+
+    // Set the discount amount
+    const discountApplied = discountAmount > 0 ? discountAmount : 0;
+
+    // Calculate the final total amount after applying the discount
+    const totalAmount = subtotal - discountApplied;
+
     const payload = {
       user_id: userId,
+      total_amount: totalAmount,  // Send the total amount after discount
       discount_code: discountCode || null,
+      discount_applied: discountApplied > 0 ? discountApplied : 0,  // Include the discount applied if any
     };
 
     try {
@@ -102,10 +163,11 @@ const CheckoutPage = () => {
     }
   };
 
+
   return (
     <div className="checkout-page">
       <h1>Checkout</h1>
-      
+
       {cart.length === 0 ? (
         <p>Your cart is empty. Please add some items to your cart.</p>
       ) : (
@@ -125,8 +187,14 @@ const CheckoutPage = () => {
               value={discountCode}
               onChange={handleDiscountChange}
               placeholder="Enter discount code"
+              disabled={!isDiscountButtonEnabled}
             />
-            <button onClick={applyDiscount}>Apply Discount</button>
+            <button
+              onClick={applyDiscount}
+              disabled={!isDiscountButtonEnabled}
+            >
+              Apply Discount
+            </button>
           </div>
           <div className="total-price">
             <h3>Total: ${totalPrice.toFixed(2)}</h3>
@@ -137,6 +205,8 @@ const CheckoutPage = () => {
           </button>
         </div>
       )}
+
+      {error && <p className="error-message">{error}</p>}
     </div>
   );
 };

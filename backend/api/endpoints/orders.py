@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from core.log_config import logger
 from core.config import get_settings
 import sys
-from schemas.schemas import ResponseBody, CartItem
+from schemas.schemas import ResponseBody, CartItem, Order
 from typing import Optional
 from store.shared_data import carts, orders
 
@@ -66,33 +66,29 @@ async def add_item_to_cart(user_id: int, item: CartItem):
     
 
 @router.post("/{user_id}/checkout", response_model=ResponseBody)
-async def checkout(user_id: int, discount_code: Optional[str] = None):
+async def checkout(user_id: int, order: Order):
     try:
         
         # Check if the user's cart exists
         if user_id not in carts or not carts[user_id]:
-            raise HTTPException(status_code=400, detail="Cart is empty. Add items to the cart first.")
+            return ResponseBody(
+            status='failed',
+            status_code='400',
+            data={"message": "cart is empty"},
+            message='Successfully sent data'
+          )
 
         # Calculate the total amount for the items in the cart
         total_amount = sum(item['price'] * item['quantity'] for item in carts[user_id])
-
-        # Discount logic
-        discount = 0
-        if discount_code:
-            # Assuming we have a simple condition where every nth order (e.g., every 3rd order) gets a discount
-            user_orders = orders.get(user_id, [])
-            if len(user_orders) > 0 and (len(user_orders) + 1) % 3 == 0:  # Every 3rd order
-                discount = total_amount * 0.10  # 10% discount
-                total_amount -= discount  # Apply discount
 
         # Generate order details
         order = {
             "order_id": len(orders.get(user_id, [])) + 1,  # Order ID is based on the number of orders already placed by the user
             "user_id": user_id,
             "cart_items": carts[user_id],
-            "total_amount": total_amount,
-            "discount_code": discount_code if discount_code else None,
-            "discount_applied": discount
+            "total_amount": order.total_amount,
+            "discount_code": order.discount_code if order.discount_code else None,
+            "discount_applied": order.discount_applied if order.discount_applied else 0.0 
         }
 
         # Store the order in the user's order history
@@ -118,3 +114,31 @@ async def checkout(user_id: int, discount_code: Optional[str] = None):
       print(f"Exception: {str(e)} --- {line_no}")
       logger.error(f"Exception: {str(e)}, At Line No. : {line_no}")
       raise HTTPException(status_code=500, message="Error occurred while fetching data. Something went wrong")
+
+
+@router.get("/{user_id}/orders", response_model=ResponseBody)
+async def get_orders(user_id: int):
+    try:
+        # Check if the user has any orders
+        if user_id not in orders or not orders[user_id]:
+              return ResponseBody(
+              status="not found",
+              status_code="404",
+              data={"message": "orders not found"},
+              message="message sent successfully."
+          )    
+
+        # Retrieve the orders for the given user
+        user_orders = orders[user_id]
+
+        return ResponseBody(
+            status="success",
+            status_code="200",
+            data={"orders": user_orders},
+            message="Orders fetched successfully"
+        )
+    except Exception as e:
+        a, b, c = sys.exc_info()
+        line_no = c.tb_lineno
+        print(f"Exception: {str(e)} --- {line_no}")
+        raise HTTPException(status_code=500, detail="Error occurred while fetching data. Something went wrong")
