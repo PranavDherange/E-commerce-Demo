@@ -113,3 +113,30 @@ async def get_stats():
       print(f"Exception: {str(e)} --- {line_no}")
       logger.error(f"Exception: {str(e)}, At Line No. : {line_no}")
       raise HTTPException(status_code=500, message="Error occurred while fetching data. Something went wrong")
+    
+
+@router.get("/check_coupon/{coupon_code}", response_model=ResponseBody)
+async def check_coupon(coupon_code: str):
+    try:
+        if (coupon_code != coupons[-1]):
+            return ResponseBody(
+                status='Not authorized',
+                status_code='400',
+                data={"message":"Invalid coupon code"},
+                message='Successfully sent data'
+                )
+
+        return ResponseBody(
+            status='success',
+            status_code='200',
+            data={"coupon_code": coupon_code},
+            message="Coupon valid."
+        )
+
+
+    except Exception as e:
+      a,b,c = sys.exc_info()
+      line_no = c.tb_lineno
+      print(f"Exception: {str(e)} --- {line_no}")
+      logger.error(f"Exception: {str(e)}, At Line No. : {line_no}")
+      raise HTTPException(status_code=500, message="Error occurred while fetching data. Something went wrong")

@@ -16,6 +16,8 @@ const CheckoutPage = () => {
   const [ordersCount, setOrdersCount] = useState(0);  // New state to store the number of orders
   const [couponCode, setCouponCode] = useState(null);  // Store coupon code if applicable
   const [isDiscountButtonEnabled, setDiscountButtonEnabled] = useState(false);  // Enable/Disable discount button
+  const [isCouponValid, setIsCouponValid] = useState(true);  // New state to track coupon validity
+
 
   // Load cart and userId from localStorage on component mount
   useEffect(() => {
@@ -89,6 +91,26 @@ const CheckoutPage = () => {
         }
       };
 
+    // Function to check if the coupon code is valid
+    const checkCouponValidity = async (couponCode) => {
+      try {
+        const response = await fetch(`${apiUrl}v1/admin/check_coupon/${couponCode}`);
+        const data = await response.json();
+  
+        if (data.status_code == 200) {
+          setIsCouponValid(true);
+          return true; // Coupon is valid
+        } else {
+          setIsCouponValid(false);
+          return false; // Coupon is invalid
+        }
+      } catch (error) {
+        console.error('Error checking coupon validity:', error);
+        setIsCouponValid(false);
+        return false;
+      }
+    };
+
   // Function to calculate the total price of the cart
   const calculateTotalPrice = (subtotal, discount) => {
     const finalPrice = subtotal - discount; // Apply discount directly
@@ -100,7 +122,18 @@ const CheckoutPage = () => {
     setDiscountCode(e.target.value);
   };
 
-  const applyDiscount = () => {
+  // Apply discount after checking if the coupon is valid
+  const applyDiscount = async () => {
+    // Validate coupon code
+    const isValid = await checkCouponValidity(discountCode);
+
+    if (!isValid) {
+      setError("Invalid coupon code");
+      setDiscountAmount(0); // No discount if coupon is invalid
+      calculateTotalPrice(cart.reduce((total, item) => total + item.price * item.quantity, 0), 0);
+      return; // Don't apply discount if coupon is invalid
+    }
+
     // Apply a 10% discount based on the subtotal (without any discount applied)
     const subtotal = cart.reduce(
       (total, item) => total + item.price * item.quantity,
@@ -202,6 +235,7 @@ const CheckoutPage = () => {
             >
               Apply Discount
             </button>
+            {!isCouponValid && <p className="error-message">Invalid coupon code</p>}  {/* Error Message */}
           </div>
           <div className="total-price">
             <h3>Total: ${totalPrice.toFixed(2)}</h3>
