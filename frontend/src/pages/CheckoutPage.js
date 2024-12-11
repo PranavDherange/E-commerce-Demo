@@ -151,6 +151,10 @@ const CheckoutPage = () => {
       }
 
       const result = await response.json();
+      
+      if(result.status_code != 200){
+        throw new Error(result.data.message || 'Error during checkout');
+      }
       console.log('Checkout successful', result);
 
       // Clear the cart after successful checkout

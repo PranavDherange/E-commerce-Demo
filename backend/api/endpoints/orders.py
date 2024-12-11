@@ -4,7 +4,7 @@ from core.config import get_settings
 import sys
 from schemas.schemas import ResponseBody, CartItem, Order
 from typing import Optional
-from store.shared_data import carts, orders
+from store.shared_data import carts, orders, coupons
 
 
 settings = get_settings()
@@ -78,8 +78,17 @@ async def checkout(user_id: int, order: Order):
             message='Successfully sent data'
           )
 
-        # Calculate the total amount for the items in the cart
-        total_amount = sum(item['price'] * item['quantity'] for item in carts[user_id])
+
+        if order.discount_code:
+            print(order.discount_code)
+            if (order.discount_code != coupons[-1]):
+                print('yes')
+                return ResponseBody(
+                    status='Not authorized',
+                    status_code='400',
+                    data={"message":"Invalid coupon code"},
+                    message='Successfully sent data'
+                    )
 
         # Generate order details
         order = {
