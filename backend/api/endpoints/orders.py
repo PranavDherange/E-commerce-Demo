@@ -31,6 +31,16 @@ async def test():
 @router.post("/{user_id}/add_item", response_model=ResponseBody)
 async def add_item_to_cart(user_id: int, item: CartItem):
     try:
+
+        if user_id < 0:
+            return ResponseBody(
+            status='invalid',
+            status_code='400',
+            data={},
+            message='Invalid user ID'
+        )
+
+
         # Check if the user already has a cart
         if user_id not in carts:
             carts[user_id] = []  # Create a new cart for the user if it doesn't exist
@@ -74,21 +84,21 @@ async def checkout(user_id: int, order: Order):
             return ResponseBody(
             status='failed',
             status_code='400',
-            data={"message": "cart is empty"},
-            message='Successfully sent data'
+            data={},
+            message='Cart is empty'
           )
 
 
-        if order.discount_code:
-            print(order.discount_code)
-            if (order.discount_code != coupons[-1]):
-                print('yes')
-                return ResponseBody(
-                    status='Not authorized',
-                    status_code='400',
-                    data={"message":"Invalid coupon code"},
-                    message='Successfully sent data'
-                    )
+        # if order.discount_code:
+        #     print(order.discount_code)
+        #     if (order.discount_code != coupons[-1]):
+        #         print('yes')
+        #         return ResponseBody(
+        #             status='Not authorized',
+        #             status_code='400',
+        #             data={"message":"Invalid coupon code"},
+        #             message='Successfully sent data'
+        #             )
 
         # Generate order details
         order = {
@@ -113,7 +123,7 @@ async def checkout(user_id: int, order: Order):
           status='success',
           status_code='200',
           data={"orders": orders[user_id]},
-          message='Successfully sent data'
+          message='Order placed successfully'
         )
 
 
