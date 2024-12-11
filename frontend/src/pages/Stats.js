@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import './Stats.css';
 
 const Stats = () => {
+
+    const apiUrl = process.env.REACT_APP_API_URL
+
   // State to hold the fetched data
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +15,7 @@ const Stats = () => {
     const fetchData = async () => {
       try {
         // Replace with your actual API endpoint
-        const response = await fetch('http://127.0.0.1:8000/v1/admin/stats');
+        const response = await fetch(`${apiUrl}v1/admin/stats`);
         
         // Check if the response is successful
         if (!response.ok) {
@@ -97,7 +100,7 @@ const Stats = () => {
         {coupons.map((coupon) => (
           <li key={coupon.coupon_code}>
             <span className="coupon-code">{coupon.coupon_code}</span>
-            <span className="coupon-discount">${coupon.discount.toFixed(2)} off</span>
+            {/* <span className="coupon-discount">${coupon.discount.toFixed(2)} off</span> */}
           </li>
         ))}
       </ul>

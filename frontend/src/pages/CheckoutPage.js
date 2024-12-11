@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import './CheckoutPage.css';  // Importing CSS for styling
 
 const CheckoutPage = () => {
+
+  const apiUrl = process.env.REACT_APP_API_URL
+
   // Local state to hold the cart and discount code
   const [cart, setCart] = useState([]);
   const [discountCode, setDiscountCode] = useState('');
@@ -49,7 +52,7 @@ const CheckoutPage = () => {
 
     const fetchOrders = async (userId) => {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/v1/orders/${userId}/orders`);
+          const response = await fetch(`${process.env.REACT_APP_API_URL}v1/orders/${userId}/orders`);
           const data = await response.json();
     
           if (data.status === 'success') {
@@ -72,7 +75,7 @@ const CheckoutPage = () => {
 
     const fetchCouponCode = async () => {
         try {
-          const response = await fetch(`http://127.0.0.1:8000/v1/admin/generate_coupon`);
+          const response = await fetch(`${process.env.REACT_APP_API_URL}v1/admin/generate_coupon`);
           const data = await response.json();
     
           if (data.status === 'success') {
@@ -134,7 +137,7 @@ const CheckoutPage = () => {
     };
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/v1/orders/${userId}/checkout`, {
+      const response = await fetch(`${apiUrl}v1/orders/${userId}/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

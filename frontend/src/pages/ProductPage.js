@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './ProductPage.css';  // Importing CSS for styling
+import axios from 'axios';
 
 const ProductPage = () => {
+
+  const apiUrl = process.env.REACT_APP_API_URL
   // Sample products data
   const products = [
     { id: 1, name: 'MacBook Pro', price: 1999.99 },
@@ -52,16 +55,10 @@ const ProductPage = () => {
 
     // Call the backend API to update the cart (POST request)
     try {
-      const response = await fetch(`http://127.0.0.1:8000/v1/orders/${userId}/add_item`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const response = await axios.post(`${apiUrl}v1/orders/${userId}/add_item`, {
           product_name: product.name,
           quantity: 1,
           price: product.price,
-        }),
       });
 
       const data = await response.json();
